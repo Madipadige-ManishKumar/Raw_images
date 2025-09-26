@@ -14,6 +14,7 @@ def home():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
+    return "Hello world"
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -31,3 +32,4 @@ def upload_file():
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
