@@ -1,13 +1,33 @@
-from flask import Flask,render_template
+from flask import Flask, request, jsonify, send_from_directory, render_template
+import os
 
-# Create a Flask application instance
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
-# Define a route for the root URL ("/")
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# Route for home page (index.html)
 @app.route("/")
-def hello_world():
+def home():
     return render_template("index.html")
 
-# Run the Flask development server
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No filename"}), 400
+
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+    file.save(filepath)
+
+    # Public HTTPS URL (works after deployment on Render/Heroku etc.)
+    file_url = request.host_url + "uploads/" + file.filename
+    return jsonify({"url": file_url})
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
